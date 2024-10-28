@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    
+
+  </body>
+</html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Include Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+        /* Set the size of the map */
+        #map {
+            height: 600px;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+   
+    <div id="map"></div>
+
+    <!-- Include Leaflet JS -->
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script>
+        // Initialize the map
+        const map = L.map('map').setView([56.1304, -106.3468], 4); // Centered on Canada
+
+        // Add a tile layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        // Load GeoJSON data for water areas
+        fetch('canada_water_areas.geojson')
+            .then(response => response.json())
+            .then(data => {
+                // Add GeoJSON layer to the map
+                L.geoJSON(data, {
+                    style: {
+                        color: 'blue',
+                        weight: 1,
+                        fillOpacity: 0.5
+                    }
+                }).addTo(map);
+            })
+            .catch(err => console.error('Error loading GeoJSON data:', err));
+
+        // Function to add a marker with popup
+        function addMarker(e) {
+            const marker = L.marker(e.latlng).addTo(map);
+            const popupContent = `<form id="dataForm">
+                                    <label for="locationInput">Location:</label>
+                                    <input type="text" id="locationInput" required><br>
+                                    <label for="phInput">pH Level:</label>
+                                    <input type="number" step="0.01" id="phInput" required><br>
+                                    <label for="tempInput">Temperature (°C):</label>
+                                    <input type="number" id="tempInput" required><br>
+                                    <button type="submit">Save</button>
+                                  </form>`;
+            marker.bindPopup(popupContent).openPopup();
+
+            // Handle form submission
+            document.getElementById('dataForm').onsubmit = function(event) {
+                event.preventDefault();
+                const location = document.getElementById('locationInput').value;
+                const phLevel = document.getElementById('phInput').value;
+                const temperature = document.getElementById('tempInput').value;
+
+                // Display the entered data
+                const dataDisplay = `Location: ${location}<br>pH Level: ${phLevel}<br>Temperature: ${temperature} °C`;
+                marker.bindPopup(dataDisplay).openPopup(); // Update the marker's popup
+            };
+        }
+
+        // Add event listener for map clicks to place markers
+        map.on('click', addMarker);
+    </script>
+</body>
+</html>
